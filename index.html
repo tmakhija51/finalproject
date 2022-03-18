@@ -1,0 +1,84 @@
+<center>
+  <button id="start">click to start :)</button>
+  <button id="stop">click to stop :(</button>
+</center>
+
+<script src="https://tonejs.github.io/build/Tone.js"></script>
+<script>
+  /* global Tone */
+
+  // synth instrument
+
+  const pingPong = new Tone.PingPongDelay("16n", 0.2).toDestination()
+  const drum = new Tone.MembraneSynth().connect(pingPong)
+
+  
+const notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+  function createScale (root, octave, pattern) {
+    const output = [root + octave]
+    for (let i = 0; i < pattern.length; i++) {
+      const pre = output[i].split(octave)[0] 
+			const idx = notes.indexOf(pre) 
+      const nxt = (idx + pattern[i]) % 12
+      octave = octave + Math.floor((idx + pattern[i]) / 12)
+      const nextNote = notes[nxt] + octave 
+      output.push(nextNote)
+    }
+		return output
+  }
+
+	
+  const dominant = [ 2, 2, 1, 2, 2, 1, 1 ]
+  const major = [2, 2, 1, 2, 1, 1, 2, 1]
+  const dorian = [2, 1, 1, 1, 2, 2, 1, 2]
+  const melodicMinor = [2, 1, 2, 2, 1, 1, 2, 1]
+  const harmonicMinor = [2, 1, 2, 2, 1, 2, 1, 1]
+  const toneTypes = [dominant, major, dorian, melodicMinor, harmonicMinor]
+  const randomTone = toneTypes[Math.floor(Math.random()*toneTypes.length)]
+  const randomKey = notes[Math.floor(Math.random()*notes.length)];
+  const outputScale = createScale(randomKey, 2, randomTone)
+  
+  console.log(outputScale)
+  
+  function createArpeggio (startingInterval, octave, pattern) {
+    const output = [startingInterval + octave]
+    const end = [2,3,4,5,6,7,8]
+    const endNote = end[Math.floor(Math.random()*end.length)]
+    for (let i = 0; i < endNote; i++) {
+    	const pre = output[i].split(octave)[0]
+			const idx = notes.indexOf(pre) 
+
+      const nxt = (idx + pattern[i+1]) % 12 
+      octave = octave + Math.floor((idx + pattern[i+1]) / 12)
+      const nextNote = notes[nxt] + octave
+      output.push(nextNote)
+
+    }
+		return output
+  }
+  const outputArpeggio = createArpeggio(randomKey, 3, randomTone)
+	console.log(outputArpeggio)
+
+	let step = 0
+  let arpeg = 0
+  Tone.Transport.scheduleRepeat((now) => {
+
+    const note = outputScale[step]
+    const altNote = outputArpeggio[arpeg]
+    console.log(note)
+    console.log(altNote)
+    drum.triggerAttackRelease(note, '108n', now)
+    drum.triggerAttackRelease(altNote, '32n', now + 0.5)
+
+    step = (step + 1) % outputScale.length
+
+  	arpeg = (arpeg + 2) % outputArpeggio.length
+  }, '4n')
+  
+  document.querySelector('#START')
+    .addEventListener('click', () => Tone.Transport.start())
+  Tone.Transport.bpm.rampTo(400, 10);
+  document.querySelector('#STOP')
+    .addEventListener('click', () => Tone.Transport.stop())
+
+</script>
